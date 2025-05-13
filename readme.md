@@ -58,8 +58,7 @@ The project aims to:
 * **A\* (A-Star):** Combines the cost from the start (g-cost) with a heuristic estimate to the goal (h-cost) for efficient optimal pathfinding.
 * **Backtracking Variants:** (e.g., Basic Backtracking, Forward Checking Backtracking) Systematically explore paths.
 * **Q-Learning:** A model-free reinforcement learning algorithm where an agent learns the value of actions in particular states.
-* *(Add any other pathfinding or decision-making algorithms you have implemented)*
-
+  
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
