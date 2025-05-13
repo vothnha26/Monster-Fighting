@@ -111,5 +111,6 @@ To get a local copy up and running, follow these simple steps.
 
 ## Authors
 
-* **(Your Name/Nickname)** - (Link to your GitHub/Portfolio if you want)
-* **(Add other authors if any)**
+* **Huỳnh Hoài Bảo** ([@BaoBaoIT-maker](https://github.com/BaoBaoIT-maker))
+* **Nguyễn Trọng Phúc** ([@vothnha26](https://github.com/vothnha26))
+* **Võ Thanh Nhã** ([@PhucX](https://github.com/PhucX))
