@@ -157,7 +157,7 @@ UCS
     * **Partial Observability (Quan sát cục bộ)**: NPC có thể hoạt động dưới cơ chế quan sát cục bộ, nơi chúng chỉ phản ứng với những gì "nhìn thấy" trong một bán kính và góc nhìn nhất định, và ghi nhớ vị trí đã biết cuối cùng (LKP) của mục tiêu.
 
 ---
-## Tài liệu tham khảo (References)
+## Tài liệu tham khảo
 
 1. Hill Climbing in Artificial Intelligence, [Truy cập ngày 3/5/2025]  
    [https://www.geeksforgeeks.org/introduction-hill-climbing-artificial-intelligence/](https://www.geeksforgeeks.org/introduction-hill-climbing-artificial-intelligence/)
