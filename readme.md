@@ -80,8 +80,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  Clone the repository (if you have one, otherwise just navigate to your project folder):
     ```sh
-    # git clone YOUR_REPOSITORY_URL
-    cd your_project_folder_name/code 
+    # git clone https://github.com/vothnha26/Monster-Fighting.git
     ```
     (Assuming your main.py is in a 'code' subfolder)
 2.  Run the game:
