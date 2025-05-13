@@ -64,12 +64,7 @@
 * Khi tất cả quái vật trong màn chơi bị tiêu diệt, một thông báo chiến thắng sẽ xuất hiện.
 
 ## GIF Gameplay
-
-* *(Bạn cần tự tạo một ảnh GIF minh họa gameplay và chèn vào đây)*
-    ```
-    ![Gameplay GIF](link_den_gif_cua_ban.gif)
-    ```
-
+    ![Simple Hill Climbing](graphics/hill_clibing_lor.gif)
 ## Cài đặt & Chạy game (Installation & Running the Game)
 
 1.  **Yêu cầu (Prerequisites)**:
