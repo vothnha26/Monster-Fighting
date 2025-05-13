@@ -64,7 +64,7 @@
 * Khi tất cả quái vật trong màn chơi bị tiêu diệt, một thông báo chiến thắng sẽ xuất hiện.
 
 ## GIF Gameplay
-    ![Simple Hill Climbing](graphics/hill_clibing_lor.gif)
+![Simple Hill Climbing](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/hill_clibing_lor.gif)
 ## Cài đặt & Chạy game (Installation & Running the Game)
 
 1.  **Yêu cầu (Prerequisites)**:
