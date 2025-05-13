@@ -66,13 +66,23 @@
 ## GIF Gameplay
 ![Simple Hill Climbing](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/hill_clibing_lor.gif)
 
+Simple Hill Climbing
+
 ![Partially Observable Environment](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/PO.gif)
+
+Partially Observable Environment
 
 ![A*](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/A_star.gif)
 
+A*
+
 ![Forward Checking](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/forward_checking.gif)
 
+Forward Checking
+
 ![UCS](https://raw.githubusercontent.com/vothnha26/Monster-Fighting/main/graphics/ucs.gif)
+
+UCS
 
 ## Cài đặt & Chạy game (Installation & Running the Game)
 
