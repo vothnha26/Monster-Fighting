@@ -11,7 +11,7 @@ class Game:
         # Sử dụng HEIGHT từ settings.py nếu có, nếu bạn đã định nghĩa HEIGTH ở đó thì giữ nguyên
         # Giả sử settings.py có HEIGHT, nếu không thì HEIGTH bạn dùng vẫn được giữ
         try:
-            display_height = HEIGHT
+            display_height = HEIGTH
         except NameError:
             display_height = HEIGTH  # Giữ lại HEIGTH nếu HEIGHT không tồn tại trong settings
 
