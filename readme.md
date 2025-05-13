@@ -1,114 +1,145 @@
-# Monster-Fighting
+# Game Đánh Quái (Monster-Fighting Game)
 
-Monster-Fighting is an action RPG game developed with Pygame, featuring AI-controlled Non-Player Characters (NPCs) that utilize various pathfinding and decision-making algorithms, including Q-Learning.
+## Mục lục (Table of Contents)
 
-## Table of Contents
+* [Giới thiệu (Introduction)](#giới-thiệu-introduction)
+* [Gameplay & Tính năng (Gameplay & Features)](#gameplay--tính-năng-gameplay--features)
+* [Cách chơi (How to Play)](#cách-chơi-how-to-play)
+* [GIF Gameplay](#gif-gameplay)
+* [Cài đặt & Chạy game (Installation & Running the Game)](#cài-đặt--chạy-game-installation--running-the-game)
+* [Công nghệ sử dụng và Thuật toán (Technologies Used and Algorithms)](#công-nghệ-sử-dụng-và-thuật-toán-technologies-used-and-algorithms)
 
-* [Overview](#overview)
-* [Features](#features)
-* [Technologies Used](#technologies-used)
-* [How AI Works (NPCs)](#how-ai-works-npcs)
-* [Algorithms Implemented (for NPCs)](#algorithms-implemented-for-npcs)
-* [Getting Started](#getting-started)
-* [How To Play](#how-to-play)
-* [Future Improvements](#future-improvements)
-* [Authors](#authors)
+---
 
-## Overview
+## Giới thiệu (Introduction)
 
-This project is a 2D game inspired by the classic "The Legend of Zelda" series. The core focus is on creating an interactive game world where NPCs exhibit intelligent behavior through various AI algorithms. Players can explore, fight enemies, and interact with these AI-driven characters.
+Đây là một trò chơi phiêu lưu hành động được phát triển bằng Pygame, nơi người chơi sẽ chiến đấu với quái vật, sử dụng vũ khí và phép thuật, đồng thời có thể tương tác với các NPC. Trò chơi có một menu chính để bắt đầu và giao diện người dùng để hiển thị thông tin của người chơi như máu, năng lượng và kinh nghiệm.
 
-The project aims to:
-* Implement a functional top-down action RPG.
-* Explore and showcase different AI pathfinding and decision-making techniques for NPCs.
-* Provide a platform to experiment with algorithms like A*, BFS, DFS, and Reinforcement Learning (Q-Learning) in a game context.
+## Gameplay & Tính năng (Gameplay & Features)
 
-## Features
+* **Điều khiển nhân vật (Player Control)**: Người chơi có thể di chuyển nhân vật lên, xuống, trái, phải.
+* **Hệ thống chiến đấu (Combat System)**:
+    * **Tấn công**: Người chơi có thể tấn công bằng vũ khí. Có nhiều loại vũ khí với các chỉ số cooldown và sát thương khác nhau (ví dụ: kiếm, giáo, rìu).
+    * **Phép thuật (Magic)**: Người chơi có thể sử dụng các loại phép thuật khác nhau như "flame" (lửa) và "heal" (hồi máu), tiêu tốn năng lượng.
+    * **Kẻ thù (Enemies)**: Có nhiều loại quái vật với các chỉ số máu, kinh nghiệm, sát thương, và hành vi khác nhau (ví dụ: squid, raccoon, spirit, bamboo, và các loại Minotaur, Samurai). Kẻ thù sử dụng các thuật toán tìm đường để di chuyển và tấn công người chơi.
+    * **NPCs**: Có các nhân vật không phải người chơi (NPC) trong game, ví dụ như "2BlueWizard" và "Demon". NPC có thể có các hành vi riêng, thuật toán tìm đường riêng và thậm chí hỗ trợ người chơi.
+* **Hệ thống nâng cấp (Upgrade System)**: Người chơi có thể nâng cấp các chỉ số như máu, năng lượng, sức tấn công, phép thuật và tốc độ bằng cách sử dụng điểm kinh nghiệm.
+* **Giao diện người dùng (UI)**:
+    * Hiển thị thanh máu, năng lượng, và điểm kinh nghiệm của người chơi.
+    * Hiển thị vũ khí và phép thuật đang được chọn.
+    * Cho phép chuyển đổi thuật toán tìm đường cho NPC.
+    * Cho phép bật/tắt chế độ "Partial Observability" và "Enemy Aggression Mode".
+    * Hiển thị thông báo khi tất cả quái vật trong màn chơi đã bị tiêu diệt.
+* **Bản đồ và Môi trường (Map & Environment)**:
+    * Bản đồ được tạo từ các tệp CSV.
+    * Có các đối tượng tương tác như cỏ có thể bị phá hủy.
+    * Sử dụng hệ thống camera YSortCameraGroup để vẽ các đối tượng theo thứ tự chiều sâu.
+* **Hiệu ứng hạt (Particle Effects)**: Trò chơi sử dụng hiệu ứng hạt cho các đòn tấn công, phép thuật, và khi quái vật bị tiêu diệt.
 
-* **Interactive Gameplay:** Control a player character, explore maps, engage in combat with enemies.
-* **Intelligent NPCs:** NPCs with selectable AI algorithms determining their movement and behavior.
-* **Multiple AI Algorithms for NPCs:** Including A*, BFS, DFS, Backtracking, UCS, Forward Checking, MinConflict, Hill Climbing, Beam Search, and Q-Learning.
-* **Dynamic Algorithm Switching:** Ability to change NPC pathfinding algorithms during gameplay via an in-game UI.
-* **Partial Observability Mode:** NPCs can operate with limited or full knowledge of the game world.
-* **Q-Learning NPCs:** NPCs that can learn behaviors through a reward-based system.
-* **Basic Combat System:** Player and enemies can attack and take damage.
-* **Graphical Interface:** Built with Pygame, featuring tile-based maps and sprite animations.
+## Cách chơi (How to Play)
 
-## Technologies Used
+### Điều khiển cơ bản:
+* **Di chuyển Nhân vật:**
+    * `Mũi tên Lên`: Đi lên
+    * `Mũi tên Xuống`: Đi xuống
+    * `Mũi tên Trái`: Sang trái
+    * `Mũi tên Phải`: Sang phải
+* **Chiến đấu:**
+    * `Phím Space`: Tấn công bằng vũ khí.
+    * `Phím Left Control (LCtrl)`: Sử dụng phép thuật.
+    * `Phím Q`: Đổi vũ khí.
+    * `Phím E`: Đổi phép thuật.
+* **Hệ thống & Giao diện:**
+    * `Phím M`: Mở/Đóng bảng nâng cấp nhân vật.
+    * `Phím P`: Bật/Tắt chế độ Quan sát Cục bộ (Partial Observability) cho NPC.
+    * `Phím G`: Bật/Tắt chế độ Hung hãn (Aggression Mode) của kẻ thù.
+    * `Phím C`: Chuyển đổi camera theo dõi (giữa người chơi và NPC).
+    * `Chuột Trái`: Nhấn nút "CHƠI NGAY" ở menu chính để vào game; tương tác với các yếu tố UI trong game (ví dụ: chọn thuật toán cho NPC).
+    * `Cuộn chuột (lên/xuống)`: Cuộn trong danh sách chọn thuật toán NPC khi menu đó đang mở.
 
-* **Python:** Version 3.12+
-* **Pygame:** For game engine, graphics, sound, and input handling.
-* **(Potentially) NumPy:** For Q-Learning calculations or other numerical tasks.
+### Mục tiêu trò chơi:
+* **Tiêu diệt kẻ thù:** Đánh bại tất cả các loại quái vật xuất hiện trên bản đồ.
+* **Nâng cấp nhân vật:** Sử dụng điểm kinh nghiệm (EXP) kiếm được từ việc tiêu diệt quái vật để tăng các chỉ số cơ bản như máu, năng lượng, sức tấn công, sức mạnh phép thuật và tốc độ di chuyển.
+* **Sống sót:** Giữ cho nhân vật của bạn không bị hết máu trước sự tấn công của kẻ thù.
+* Khi tất cả quái vật trong màn chơi bị tiêu diệt, một thông báo chiến thắng sẽ xuất hiện.
 
-## How AI Works (NPCs)
+## GIF Gameplay
 
-* **Game World Representation:** The game map is tile-based, with obstacles and entities defined.
-* **NPC State & Perception:**
-    * **Non-QL NPCs:** Utilize pathfinding algorithms to navigate towards targets (player, enemies, patrol points). Can operate under full or partial observability (simulating sight range and line-of-sight).
-    * **Q-Learning NPCs:** Observe a discretized state of the environment (e.g., distance/direction to player/enemy, own health) and choose actions based on a learned Q-table. Rewards are given for desirable actions (e.g., attacking enemies, reaching player, surviving).
-* **Pathfinding:** Algorithms like A*, BFS, DFS are used by non-QL NPCs to find paths around obstacles.
-* **Decision Making:**
-    * **Non-QL NPCs:** Use a state machine (`get_status`, `actions`) to decide between idling, moving, attacking, patrolling, or following specific logic like POE's Last Known Positions.
-    * **Q-Learning NPCs:** The Q-agent selects actions to maximize expected future rewards.
-
-## Algorithms Implemented (for NPCs)
-
-* **Breadth-First Search (BFS):** Explores level by level, finds the shortest path in terms of steps.
-* **Depth-First Search (DFS):** Explores one path deeply before backtracking.
-* **A\* (A-Star):** Combines the cost from the start (g-cost) with a heuristic estimate to the goal (h-cost) for efficient optimal pathfinding.
-* **Backtracking Variants:** (e.g., Basic Backtracking, Forward Checking Backtracking) Systematically explore paths.
-* **Q-Learning:** A model-free reinforcement learning algorithm where an agent learns the value of actions in particular states.
-  
-## Getting Started
-
-To get a local copy up and running, follow these simple steps.
-
-### Prerequisites
-
-* Python 3.12 or newer
-* Pygame:
-    ```sh
-    pip install pygame
+* *(Bạn cần tự tạo một ảnh GIF minh họa gameplay và chèn vào đây)*
     ```
-* (If using NumPy for Q-Learning or other tasks)
-    ```sh
-    pip install numpy
+    ![Gameplay GIF](link_den_gif_cua_ban.gif)
     ```
 
-### Installation
+## Cài đặt & Chạy game (Installation & Running the Game)
 
-1.  Clone the repository 
-    ```sh
-    # git clone https://github.com/vothnha26/Monster-Fighting.git
+1.  **Yêu cầu (Prerequisites)**:
+    * Cài đặt Python (Phiên bản cụ thể không được đề cập, nhưng các game Pygame thường tương thích tốt với Python 3.x).
+    * Cài đặt thư viện Pygame:
+        ```bash
+        pip install pygame
+        ```
+2.  **Tải mã nguồn (Download Source Code)**:
+    * Tải hoặc clone toàn bộ thư mục dự án.
+3.  **Cấu trúc thư mục dự kiến (Expected Directory Structure)**:
+    Dựa trên các đường dẫn trong mã nguồn, cấu trúc thư mục có thể trông giống như sau:
     ```
-2.  Run the game:
-    ```sh
-    python main.py
+    Game_Project/
+    ├── code/
+    │   ├── main.py
+    │   ├── player.py
+    │   ├── enemy.py
+    │   ├── npc.py
+    │   ├── level.py
+    │   ├── settings.py
+    │   ├── tile.py
+    │   ├── weapon.py
+    │   ├── magic.py
+    │   ├── particles.py
+    │   ├── entity.py
+    │   ├── support.py
+    │   ├── ui.py
+    │   ├── upgrade.py
+    │   └── pathfinding_algorithms.py
+    ├── graphics/
+    │   ├── player/
+    │   ├── monsters/
+    │   ├── npcs/
+    │   ├── weapons/
+    │   ├── particles/
+    │   ├── objects/
+    │   ├── tilemap/
+    │   └── font/
+    ├── audio/
+    │   ├── attack/
+    │   └── main.ogg (và các file âm thanh khác)
+    └── map/
+        └── map_FloorBlocks.csv (và các file map khác)
     ```
+    *Lưu ý*: Đảm bảo rằng các đường dẫn đến tài nguyên (hình ảnh, âm thanh, font, map) trong file `settings.py` và các file mã nguồn khác là chính xác so với cấu trúc thư mục của bạn. Các đường dẫn hiện tại trong code sử dụng `../graphics/` hoặc `../audio/`, cho thấy thư mục `code` nằm song song với `graphics` và `audio`.
 
-## How To Play
+4.  **Chạy game (Run the Game)**:
+    * Mở terminal hoặc command prompt.
+    * Điều hướng đến thư mục `code` của dự án.
+    * Chạy file `main.py`:
+        ```bash
+        python main.py
+        ```
 
-* **Movement:** Use the **Arrow Keys** (↑, ↓, ←, →) to move the Player.
-* **Attack:** Press **Spacebar** to use your weapon.
-* **Magic:** Press **Left Ctrl** to cast selected magic.
-* **Switch Weapon:** Press **Q**.
-* **Switch Magic:** Press **E**.
-* **In-Game Menu / Pause:** Press **M** (this might also show NPC upgrade menu if implemented).
-* **Toggle Partial Observability (PO):** Press **P** to switch NPC perception mode.
-* **Change NPC Algorithm:** Click the "NPC Algo: [Current Algo]" button in the UI to open the algorithm selection menu. Click on an algorithm name to apply it to NPCs. Use the mouse scroll wheel if the list is long.
-* **(Add any other specific game controls or features)**
+## Công nghệ sử dụng và Thuật toán (Technologies Used and Algorithms)
 
-## Future Improvements
+* **Công nghệ (Technology)**:
+    * **Python**: Ngôn ngữ lập trình chính.
+    * **Pygame**: Thư viện để phát triển game.
+* **Thuật toán (Algorithms)**:
+    * **Tìm đường (Pathfinding)**:
+        * **A\***: Được sử dụng làm thuật toán tìm đường chính cho NPC và có thể là cả Enemy.
+        * **BFS (Breadth-First Search)**: Có sẵn và được sử dụng bởi một số Enemy.
+        * **Hill Climbing**: Được sử dụng bởi một số Enemy.
+        * **RTAA\* (Real-Time Adaptive A\*)**: Có sẵn và được sử dụng bởi một số Enemy.
+        * Các thuật toán khác được định nghĩa trong `pathfinding_algorithms.txt` bao gồm: DFS, UCS, Backtracking, Forward Checking Backtracking, MinConflict-like Step Search, Beam Search, và Genetic Algorithm (hiện tại dùng A\* làm fallback).
+    * **Quản lý trạng thái (State Management)**: Các thực thể (Player, Enemy, NPC) có các trạng thái khác nhau (ví dụ: idle, move, attack) ảnh hưởng đến hành vi và hoạt ảnh.
+    * **Xử lý va chạm (Collision Detection)**: Pygame được sử dụng để phát hiện va chạm giữa các thực thể và vật cản.
+    * **Steering Behaviors (Tách bầy - Separation)**: Kẻ thù và NPC có thể có hành vi tách bầy để tránh chồng chéo.
+    * **Partial Observability (Quan sát cục bộ)**: NPC có thể hoạt động dưới cơ chế quan sát cục bộ, nơi chúng chỉ phản ứng với những gì "nhìn thấy" trong một bán kính và góc nhìn nhất định, và ghi nhớ vị trí đã biết cuối cùng (LKP) của mục tiêu.
 
-* More sophisticated Q-Learning state/action representations and reward functions.
-* Advanced NPC behaviors (e.g., flanking, retreating, coordinated attacks).
-* More diverse enemy types with unique AI.
-* Saving and loading game progress.
-* Story elements and quests.
-* Improved UI and sound design.
-
-## Authors
-
-* **Huỳnh Hoài Bảo** ([@BaoBaoIT-maker](https://github.com/BaoBaoIT-maker))
-* **Nguyễn Trọng Phúc** ([@vothnha26](https://github.com/vothnha26))
-* **Võ Thanh Nhã** ([@PhucX](https://github.com/PhucX))
+---
