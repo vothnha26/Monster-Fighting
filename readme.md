@@ -149,7 +149,6 @@ UCS
         * **A\***: Được sử dụng làm thuật toán tìm đường chính cho NPC và có thể là cả Enemy.
         * **BFS (Breadth-First Search)**: Có sẵn và được sử dụng bởi một số Enemy.
         * **Hill Climbing**: Được sử dụng bởi một số Enemy.
-        * **RTAA\* (Real-Time Adaptive A\*)**: Có sẵn và được sử dụng bởi một số Enemy.
         * Các thuật toán khác được định nghĩa trong `pathfinding_algorithms.txt` bao gồm: DFS, UCS, Backtracking, Forward Checking Backtracking, MinConflict-like Step Search, Beam Search, và Genetic Algorithm (hiện tại dùng A\* làm fallback).
     * **Quản lý trạng thái (State Management)**: Các thực thể (Player, Enemy, NPC) có các trạng thái khác nhau (ví dụ: idle, move, attack) ảnh hưởng đến hành vi và hoạt ảnh.
     * **Xử lý va chạm (Collision Detection)**: Pygame được sử dụng để phát hiện va chạm giữa các thực thể và vật cản.
