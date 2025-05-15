@@ -1,5 +1,3 @@
-# npc.py
-
 import pygame
 from collections import deque  # Sử dụng deque cho path_history
 import os
@@ -9,7 +7,7 @@ from settings import *
 from entity import Entity
 from support import import_folder
 from pygame.math import Vector2
-from pathfinding_algorithms import a_star_pathfinding, heuristic_diagonal
+from pathfinding_algorithms import a_star_pathfinding, heuristic_diagonal,PATHFINDING_ALGORITHMS
 from enemy import Enemy
 
 
@@ -28,12 +26,26 @@ class NPC(Entity):
         self.facing_direction = Vector2(0, 1)
 
         self.is_hunting_all_enemies = True
-        self.is_invincible_override = True  # Ví dụ: BlueWizard có thể bất tử
+        self.is_invincible_override = True
 
         self.apply_separation = False
         self.separation_radius_sq = (TILESIZE * 1.5) ** 2
         self.separation_strength = 0.5
 
+        self.pathfinding_func = pathfinding_func
+        self.current_algorithm_name_str = "Unknown"  # Sẽ được đặt bởi Level/UI
+        # Cố gắng xác định tên thuật toán ban đầu
+        if level_instance_ref and hasattr(level_instance_ref, 'selected_npc_algorithm_name'):
+            self.current_algorithm_name_str = level_instance_ref.selected_npc_algorithm_name
+        else:  # Thử tìm từ dict nếu không được cung cấp qua level_ref
+            for name, func_obj in PATHFINDING_ALGORITHMS.items():
+                if func_obj == self.pathfinding_func:
+                    self.current_algorithm_name_str = name
+                    break
+
+        self.has_performance_issue = False
+        self.problematic_algo_name = None
+        self.last_path_calc_duration_ms = 0
         npc_info = npc_data.get(self.npc_name)
         if not npc_info:
             print(f"Cảnh báo: Không tìm thấy dữ liệu cho NPC '{self.npc_name}' trong settings.npc_data")
@@ -77,7 +89,7 @@ class NPC(Entity):
             elif default_anim_key in self.animations and self.animations[default_anim_key]:
                 self.animations['searching_lkp'] = self.animations[default_anim_key]
             else:
-                placeholder_surf = pygame.Surface((TILESIZE, TILESIZE));
+                placeholder_surf = pygame.Surface((TILESIZE, TILESIZE))
                 placeholder_surf.fill('orange')
                 self.animations['searching_lkp'] = [placeholder_surf]
 
@@ -218,7 +230,7 @@ class NPC(Entity):
             elif self.animations.get('idle'):
                 self.animations['searching_lkp'] = self.animations['idle']
             else:
-                surf = pygame.Surface((TILESIZE, TILESIZE));
+                surf = pygame.Surface((TILESIZE, TILESIZE))
                 surf.fill('orange')
                 self.animations['searching_lkp'] = [surf]
                 print(f"NPC {name}: Sử dụng placeholder cho animation 'searching_lkp'.")
@@ -235,7 +247,7 @@ class NPC(Entity):
 
             if self.status not in self.animations or not self.animations[self.status]:
                 if 'idle' not in self.animations or not self.animations['idle']:
-                    surf = pygame.Surface((TILESIZE, TILESIZE));
+                    surf = pygame.Surface((TILESIZE, TILESIZE))
                     surf.fill('cyan')
                     self.animations['idle'] = [surf]
 
@@ -362,12 +374,12 @@ class NPC(Entity):
                         if check_tile not in candidate_tiles:
                             candidate_tiles.append(check_tile)
         if not candidate_tiles: return None
-        best_spot = None;
+        best_spot = None
         highest_score = -float('inf')
         for tile_candidate in candidate_tiles:
             score = self.evaluate_guard_position(tile_candidate, player_tile, enemy_sprites_for_eval)
             if score > highest_score:
-                highest_score = score;
+                highest_score = score
                 best_spot = tile_candidate
         return best_spot
 
@@ -502,7 +514,7 @@ class NPC(Entity):
                 self.recalculation_needed = True
                 self.last_target_tile_for_path = None
             elif current_base_status == 'idle' or current_base_status == 'attack':
-                self.path.clear();
+                self.path.clear()
                 self.next_step = None
 
     def get_directional_status(self, base_status):
@@ -587,11 +599,11 @@ class NPC(Entity):
                     self.direction = Vector2(random.uniform(-1, 1), random.uniform(-1, 1)).normalize()
             else:
                 self.direction = Vector2(random.uniform(-1, 1), random.uniform(-1, 1)).normalize()
-            self.path.clear();
-            self.next_step = None;
+            self.path.clear()
+            self.next_step = None
             self.recalculation_needed = True
-            self.frame_index = 0;
-            self.is_stuck = False;
+            self.frame_index = 0
+            self.is_stuck = False
             self.last_pos_stuck_check = None
             self.status = self.get_directional_status('idle')
 
@@ -616,7 +628,7 @@ class NPC(Entity):
     def check_death(self):
         if self.health <= 0:
             if hasattr(self, 'is_invincible_override') and self.is_invincible_override:
-                self.health = 1;
+                self.health = 1
                 return
             if self.death_sound: self.death_sound.play()
             if self.level_ref and hasattr(self.level_ref, 'animation_player'):
@@ -641,14 +653,14 @@ class NPC(Entity):
                     if current_pos_vec.distance_squared_to(self.last_pos_stuck_check) < self.stuck_move_threshold_sq:
                         if not self.is_stuck:
                             self.is_stuck = True
-                            self.direction = -self.facing_direction if self.facing_direction.length_sq() > 0 else Vector2(
+                            self.direction = -self.facing_direction if self.facing_direction.length_squared() > 0 else Vector2(
                                 random.uniform(-1, 1), random.uniform(-1, 1)).normalize()
-                            self.path.clear();
-                            self.next_step = None;
+                            self.path.clear()
+                            self.next_step = None
                             self.next_lkp_search_sub_tile = None
-                            self.recalculation_needed = True;
+                            self.recalculation_needed = True
                             self.last_target_tile_for_path = None
-                            self.current_guard_target_tile = None;
+                            self.current_guard_target_tile = None
                             self.last_path_time = 0
                     else:
                         if self.is_stuck: self.is_stuck = False
@@ -715,10 +727,6 @@ class NPC(Entity):
         # --- KẾT THÚC GHI DẤU VẾT ---
 
         self.direction = original_entity_direction
-
-    # Phương thức draw_path_history không còn cần thiết ở đây nữa
-    # vì việc vẽ đã được chuyển sang YSortCameraGroup.custom_draw trong level.py
-    # để xử lý offset camera chính xác.
 
     def is_in_fov(self, target_entity):
         if not target_entity or not hasattr(target_entity, 'hitbox') or target_entity.hitbox is None: return False
@@ -798,86 +806,153 @@ class NPC(Entity):
 
     def actions(self, enemy_sprites_for_guard_eval, can_calculate_path_this_frame):
         current_time = pygame.time.get_ticks()
+
+        if self.has_performance_issue and self.current_algorithm_name_str == self.problematic_algo_name:
+            self.direction = Vector2()
+            self.path.clear()
+            self.next_step = None
+            self.status = self.get_directional_status('idle')
+            return
+
         if self.direction.length_squared() > 0.01:
             self.facing_direction = self.direction.normalize()
 
         if self.status.startswith('attack'):
             target_is_enemy = isinstance(self.current_target_entity, Enemy)
-            target_is_valid_for_attack = self.current_target_entity and self.current_target_entity.groups() and \
-                                         (target_is_enemy or (
-                                                     not self.is_hunting_all_enemies and self.current_target_entity == self.player and \
-                                                     (
-                                                                 not self.level_ref or not self.level_ref.partial_observability_enabled)))
+            target_is_valid_for_attack = (self.current_target_entity and
+                                          self.current_target_entity.groups() and
+                                          (target_is_enemy or
+                                           (not self.is_hunting_all_enemies and
+                                            self.current_target_entity == self.player and
+                                            (not self.level_ref or not self.level_ref.partial_observability_enabled)
+                                            )
+                                           )
+                                          )
             if target_is_valid_for_attack:
                 distance_to_target, direction_to_target = self.get_entity_distance_direction(self.current_target_entity)
-                if direction_to_target.length_squared() > 0.01: self.facing_direction = direction_to_target
+                if direction_to_target.length_squared() > 0.01:
+                    self.facing_direction = direction_to_target
                 if distance_to_target <= self.attack_radius and self.can_attack:
                     self.attack_time = current_time
                     if target_is_enemy:
                         self.damage_enemy_callback(self.attack_damage, self.attack_type, self.current_target_entity)
-                    if self.attack_sound: self.attack_sound.play()
+                    if self.attack_sound:
+                        self.attack_sound.play()
                     self.can_attack = False
                     self.direction = Vector2()
                 elif distance_to_target > self.attack_radius:
-                    self.status = self.get_directional_status('move');
+                    self.status = self.get_directional_status('move')
                     self.recalculation_needed = True
             else:
-                self.status = self.get_directional_status('idle');
-                self.recalculation_needed = True;
+                self.status = self.get_directional_status('idle')
+                self.recalculation_needed = True
                 self.current_target_entity = None
             return
 
         elif self.status.startswith('guarding'):
-            if self.current_guard_target_tile:
-                pathfinding_target_tile = self.current_guard_target_tile
+            pathfinding_target_tile_for_guarding = None
+            if self.can_guard_player and self.player and self.player.groups():
+                player_tile_for_guard = self.get_tile_coords(self.player.hitbox.center)
+                dist_to_player_guarding, _ = self.get_entity_distance_direction(self.player)
+
+                needs_new_guard_spot_logic = False
+                if (self.current_guard_target_tile is None or
+                        current_time - self.last_guard_reposition_time > self.guard_reposition_cooldown or
+                        not (
+                                self.guard_min_dist_to_player * 0.8 < dist_to_player_guarding < self.guard_max_dist_to_player * 1.2)):
+                    if (self.current_guard_target_tile and
+                            self.get_tile_coords() == self.current_guard_target_tile and
+                            Vector2(player_tile_for_guard).distance_to(Vector2(
+                                self.current_guard_target_tile)) * TILESIZE > self.guard_ideal_dist_to_player * 1.5):
+                        needs_new_guard_spot_logic = True
+                    elif not self.current_guard_target_tile:
+                        needs_new_guard_spot_logic = True
+
+                if needs_new_guard_spot_logic and can_calculate_path_this_frame:
+                    best_spot_found = self.find_best_guard_spot(enemy_sprites_for_guard_eval)
+                    if best_spot_found and best_spot_found != self.get_tile_coords():
+                        self.current_guard_target_tile = best_spot_found
+                        self.recalculation_needed = True
+                        self.last_guard_reposition_time = current_time
+                    elif not best_spot_found:
+                        self.current_guard_target_tile = player_tile_for_guard
+                        self.recalculation_needed = True
+
+                pathfinding_target_tile_for_guarding = self.current_guard_target_tile
+
+                if not pathfinding_target_tile_for_guarding or self.get_tile_coords() == pathfinding_target_tile_for_guarding:
+                    if dist_to_player_guarding > self.guard_ideal_dist_to_player * 1.1:
+                        if player_tile_for_guard != self.get_tile_coords():
+                            pathfinding_target_tile_for_guarding = player_tile_for_guard
+                        else:
+                            self.direction = Vector2()
+                            self.path.clear()
+                            self.next_step = None
+                            return
+                    else:
+                        self.direction = Vector2()
+                        self.path.clear()
+                        self.next_step = None
+                        return
             else:
-                self.direction = Vector2();
                 self.status = self.get_directional_status('idle')
+                self.current_guard_target_tile = None
+                self.direction = Vector2()
+                return
+
+            if pathfinding_target_tile_for_guarding is None or self.get_tile_coords() == pathfinding_target_tile_for_guarding:
+                self.direction = Vector2()
+                self.path.clear()
+                self.next_step = None
             return
 
         elif self.status.startswith('searching_lkp'):
-            if not self.original_lkp_search_tile:
-                self.status = self.get_directional_status('idle');
-                self.recalculation_needed = True;
+            if not self.original_lkp_search_tile or not self.pursuing_lkp_info:
+                self.status = self.get_directional_status('idle')
+                self.recalculation_needed = True
                 return
 
-            lkp_target_id = self.pursuing_lkp_info['target_id'] if self.pursuing_lkp_info else None
-            if lkp_target_id:
-                lkp_target_instance = self.player if lkp_target_id == 'player' else \
-                    next((s for s in (self.level_ref.attackable_sprites if self.level_ref else []) if
-                          self.get_target_id(s) == lkp_target_id), None)
-                if lkp_target_instance and self.can_see_target(lkp_target_instance):
-                    self.current_target_entity = lkp_target_instance;
-                    self.target_is_visible = True
-                    self.pursuing_lkp_info = None;
-                    self.original_lkp_search_tile = None;
-                    self.next_lkp_search_sub_tile = None
-                    dist_to_target, _ = self.get_entity_distance_direction(self.current_target_entity)
-                    if dist_to_target <= self.attack_radius and self.can_attack:
-                        self.status = self.get_directional_status('attack')
-                    else:
-                        self.status = self.get_directional_status('move')
-                    self.recalculation_needed = True;
-                    return
+            lkp_target_id = self.pursuing_lkp_info['target_id']
+            lkp_target_instance = None
+            if lkp_target_id == 'player':
+                lkp_target_instance = self.player
+            elif self.level_ref and hasattr(self.level_ref, 'attackable_sprites'):
+                lkp_target_instance = next(
+                    (s for s in self.level_ref.attackable_sprites if self.get_target_id(s) == lkp_target_id), None)
+
+            if lkp_target_instance and self.can_see_target(lkp_target_instance):
+                self.current_target_entity = lkp_target_instance
+                self.target_is_visible = True
+                self.pursuing_lkp_info = None
+                self.original_lkp_search_tile = None
+                self.next_lkp_search_sub_tile = None
+                dist_to_target, _ = self.get_entity_distance_direction(self.current_target_entity)
+                if dist_to_target <= self.attack_radius and self.can_attack:
+                    self.status = self.get_directional_status('attack')
+                else:
+                    self.status = self.get_directional_status('move')
+                self.recalculation_needed = True
+                return
 
             if self.next_lkp_search_sub_tile is None:
                 if self.current_lkp_search_index < len(self.lkp_search_pattern_points):
                     offset = self.lkp_search_pattern_points[self.current_lkp_search_index]
-                    self.next_lkp_search_sub_tile = (self.original_lkp_search_tile[0] + offset[0],
-                                                     self.original_lkp_search_tile[1] + offset[1])
+                    potential_sub_tile = (self.original_lkp_search_tile[0] + offset[0],
+                                          self.original_lkp_search_tile[1] + offset[1])
+                    if self.is_walkable(potential_sub_tile):
+                        self.next_lkp_search_sub_tile = potential_sub_tile
                     self.current_lkp_search_index += 1
-                    self.path.clear();
+                    self.path.clear()
                     self.next_step = self.next_lkp_search_sub_tile
                     self.recalculation_needed = False
                 else:
-                    if self.pursuing_lkp_info:
-                        if self.pursuing_lkp_info['target_id'] in self.last_known_positions:
-                            del self.last_known_positions[self.pursuing_lkp_info['target_id']]
-                    self.pursuing_lkp_info = None;
-                    self.original_lkp_search_tile = None;
+                    if self.pursuing_lkp_info and self.pursuing_lkp_info['target_id'] in self.last_known_positions:
+                        del self.last_known_positions[self.pursuing_lkp_info['target_id']]
+                    self.pursuing_lkp_info = None
+                    self.original_lkp_search_tile = None
                     self.next_lkp_search_sub_tile = None
-                    self.status = self.get_directional_status('idle');
-                    self.recalculation_needed = True;
+                    self.status = self.get_directional_status('idle')
+                    self.recalculation_needed = True
                     return
 
             if self.next_step:
@@ -885,16 +960,15 @@ class NPC(Entity):
                 target_py = self.next_step[1] * TILESIZE + TILESIZE // 2
                 direction_to_step = Vector2(target_px, target_py) - Vector2(self.hitbox.center)
                 dist_sq_to_step = direction_to_step.length_squared()
-                close_enough_sq = (self.speed * 1.0) ** 2
-                close_enough_sq = max(close_enough_sq, (TILESIZE * 0.3) ** 2)
+                close_enough_sq = max((self.speed * 1.0) ** 2, (TILESIZE * 0.3) ** 2)
                 if dist_sq_to_step < close_enough_sq:
-                    self.next_lkp_search_sub_tile = None;
+                    self.next_lkp_search_sub_tile = None
                     self.next_step = None
                 elif direction_to_step.length() > 0:
                     self.direction = direction_to_step.normalize()
                 else:
-                    self.direction = Vector2();
-                    self.next_lkp_search_sub_tile = None;
+                    self.direction = Vector2()
+                    self.next_lkp_search_sub_tile = None
                     self.next_step = None
             else:
                 self.next_lkp_search_sub_tile = None
@@ -904,134 +978,177 @@ class NPC(Entity):
             pathfinding_target_tile = None
             effective_stop_threshold = self.stop_radius
 
-            if self.level_ref and self.level_ref.partial_observability_enabled:
+            if self.status.startswith('guarding_player_move_target'):
+                pathfinding_target_tile = self.current_guard_target_tile
+                effective_stop_threshold = TILESIZE * 0.4
+            elif self.level_ref and self.level_ref.partial_observability_enabled:
                 if self.target_is_visible and self.current_target_entity and self.current_target_entity.groups():
                     pathfinding_target_tile = self.get_tile_coords(self.current_target_entity.hitbox.center)
-                    if isinstance(self.current_target_entity, Enemy) or (
-                            self.is_hunting_all_enemies and self.current_target_entity == self.player):
+                    if (isinstance(self.current_target_entity, Enemy) or
+                            (self.is_hunting_all_enemies and self.current_target_entity == self.player)):
                         effective_stop_threshold = self.attack_radius * 0.8
                 elif self.pursuing_lkp_info:
                     pathfinding_target_tile = self.pursuing_lkp_info['tile']
                     effective_stop_threshold = TILESIZE * 0.3
                 else:
-                    self.status = self.get_directional_status('idle');
-                    self.direction = Vector2();
-                    self.path.clear();
-                    self.next_step = None;
+                    self.status = self.get_directional_status('idle')
+                    self.direction = Vector2()
+                    self.path.clear()
+                    self.next_step = None
                     return
             else:
                 if self.current_target_entity and self.current_target_entity.groups():
                     pathfinding_target_tile = self.get_tile_coords(self.current_target_entity.hitbox.center)
-                    if isinstance(self.current_target_entity, Enemy) or (
-                            self.is_hunting_all_enemies and self.current_target_entity == self.player):
+                    if (isinstance(self.current_target_entity, Enemy) or
+                            (self.is_hunting_all_enemies and self.current_target_entity == self.player)):
                         effective_stop_threshold = self.attack_radius * 0.8
                 else:
-                    self.status = self.get_directional_status('idle');
-                    self.direction = Vector2();
-                    self.path.clear();
-                    self.next_step = None;
+                    self.status = self.get_directional_status('idle')
+                    self.direction = Vector2()
+                    self.path.clear()
+                    self.next_step = None
                     return
 
-            if pathfinding_target_tile:
-                if self.current_target_entity and self.current_target_entity.groups() and (
-                        self.target_is_visible or not (
-                        self.level_ref and self.level_ref.partial_observability_enabled)):
-                    distance_to_live_target, _ = self.get_entity_distance_direction(self.current_target_entity)
-                    if distance_to_live_target <= effective_stop_threshold:
-                        self.path.clear();
-                        self.next_step = None;
-                        self.direction = Vector2()
-                        if (isinstance(self.current_target_entity, Enemy) or (
-                                self.is_hunting_all_enemies and self.current_target_entity == self.player)) and self.can_attack and distance_to_live_target <= self.attack_radius:
-                            self.status = self.get_directional_status('attack')
+            if not pathfinding_target_tile:
+                self.status = self.get_directional_status('idle')
+                self.direction = Vector2()
+                self.path.clear()
+                self.next_step = None
+                return
+
+            if (self.current_target_entity and
+                    self.current_target_entity.groups() and
+                    (self.target_is_visible or
+                     not (self.level_ref and self.level_ref.partial_observability_enabled))):
+                distance_to_live_target, _ = self.get_entity_distance_direction(self.current_target_entity)
+                if distance_to_live_target <= effective_stop_threshold:
+                    self.path.clear()
+                    self.next_step = None
+                    self.direction = Vector2()
+                    if ((isinstance(self.current_target_entity, Enemy) or
+                         (self.is_hunting_all_enemies and self.current_target_entity == self.player)) and
+                            self.can_attack and distance_to_live_target <= self.attack_radius):
+                        self.status = self.get_directional_status('attack')
+                    else:
+                        self.status = self.get_directional_status('idle')
+                    self.last_target_tile_for_path = None
+                    return
+
+            dist_to_pf_target_approx = Vector2(self.hitbox.center).distance_to(
+                Vector2(pathfinding_target_tile[0] * TILESIZE + TILESIZE // 2,
+                        pathfinding_target_tile[1] * TILESIZE + TILESIZE // 2))
+            current_path_cooldown_move = self.path_cooldown_far if dist_to_pf_target_approx > self.follow_radius * 0.7 else self.path_cooldown
+            moved_significantly = self.target_tile_moved_significantly(pathfinding_target_tile)
+            if self.pursuing_lkp_info:
+                moved_significantly = True
+
+            needs_recalc_now = (can_calculate_path_this_frame and
+                                (self.recalculation_needed or
+                                 (
+                                             current_time - self.last_path_time >= current_path_cooldown_move and moved_significantly) or
+                                 (not self.next_step and not self.path and self.pathfinding_func is not None)
+                                 )
+                                )
+
+            if needs_recalc_now:
+                self.last_target_tile_for_path = pathfinding_target_tile
+                target_tile_on_obstacle = self.check_target_tile_on_obstacle(pathfinding_target_tile)
+                if not target_tile_on_obstacle and self.pathfinding_func:
+                    self.recalculation_needed = False
+                    self.last_path_time = current_time
+                    start_tile = self.get_tile_coords()
+                    self.path.clear()
+                    self.next_step = None
+
+                    calculated_path = None
+                    PERFORMANCE_LIMIT_MS = 250
+                    algo_display_name = self.current_algorithm_name_str
+                    is_complex_algo_for_timing = algo_display_name in ['Backtracking', 'Forward Checking BS']
+
+                    time_before_pf_action = pygame.time.get_ticks()
+                    try:
+                        func_name_for_call = getattr(self.pathfinding_func, '__name__', 'unknown')
+                        if func_name_for_call in ['bfs_pathfinding',
+                                                  'dfs_pathfinding',
+                                                  'ucs_pathfinding',
+                                                  'backtracking_pathfinding',
+                                                  'forward_checking_backtracking_pathfinding'
+                                                  ]:
+                            calculated_path = self.pathfinding_func(start_tile, pathfinding_target_tile,
+                                                                    self.is_walkable)
                         else:
-                            self.status = self.get_directional_status('idle')
-                        self.last_target_tile_for_path = None;
+                            calculated_path = self.pathfinding_func(start_tile, pathfinding_target_tile,
+                                                                    self.is_walkable, heuristic_func=self.heuristic)
+
+                        if calculated_path and isinstance(calculated_path, deque):
+                            self.path = calculated_path
+                            if self.path:
+                                self.next_step = self.path.popleft()
+
+                    except Exception as e:
+                        print(
+                            f"Lỗi pathfinding (move) cho {self.npc_name} bằng {getattr(self.pathfinding_func, '__name__', '?')}: {e}")
+                        self.direction = Vector2()
+                        self.path.clear()
+                        self.next_step = None
+                        self.recalculation_needed = True
+                        if self.pursuing_lkp_info:
+                            self.pursuing_lkp_info = None
+
+                    time_after_pf_action = pygame.time.get_ticks()
+                    self.last_path_calc_duration_ms = time_after_pf_action - time_before_pf_action
+
+                    if (is_complex_algo_for_timing and
+                            (self.last_path_calc_duration_ms > PERFORMANCE_LIMIT_MS or
+                             (calculated_path is None and self.last_path_calc_duration_ms > 20))):
+                        if self.level_ref and hasattr(self.level_ref, 'report_npc_pathfinding_issue'):
+                            pass
+                        self.level_ref.report_npc_pathfinding_issue(self, algo_display_name,self.last_path_calc_duration_ms)
+                        self.has_performance_issue = True
+                        self.problematic_algo_name = algo_display_name
+                        self.path.clear()
+                        self.next_step = None
+                        self.status = self.get_directional_status('idle')
+                        self.direction = Vector2()
                         return
 
-                dist_to_pf_target_approx = Vector2(self.hitbox.center).distance_to(
-                    Vector2(pathfinding_target_tile[0] * TILESIZE + TILESIZE // 2,
-                            pathfinding_target_tile[1] * TILESIZE + TILESIZE // 2))
-                current_path_cooldown_move = self.path_cooldown_far if dist_to_pf_target_approx > self.follow_radius * 0.7 else self.path_cooldown
-                moved_significantly = self.target_tile_moved_significantly(pathfinding_target_tile)
-                if self.pursuing_lkp_info: moved_significantly = True
+                    if not self.next_step and not self.path:
+                        self.direction = Vector2()
+                        self.recalculation_needed = True
+                        if self.pursuing_lkp_info:
+                            if self.pursuing_lkp_info['target_id'] in self.last_known_positions:
+                                del self.last_known_positions[self.pursuing_lkp_info['target_id']]
+                            self.pursuing_lkp_info = None
+                elif target_tile_on_obstacle:
+                    self.direction = Vector2()
+                    self.path.clear()
+                    self.next_step = None
+                    self.recalculation_needed = True
+                    if self.pursuing_lkp_info:
+                        self.pursuing_lkp_info = None
 
-                needs_recalc_now = can_calculate_path_this_frame and (self.recalculation_needed or (
-                            current_time - self.last_path_time >= current_path_cooldown_move and moved_significantly) or (
-                                                                                  not self.next_step and not self.path and self.pathfinding_func is not None))
-
-                if needs_recalc_now:
-                    self.last_target_tile_for_path = pathfinding_target_tile
-                    target_tile_on_obstacle = self.check_target_tile_on_obstacle(pathfinding_target_tile)
-                    if not target_tile_on_obstacle and self.pathfinding_func:
-                        self.recalculation_needed = False;
-                        self.last_path_time = current_time
-                        start_tile = self.get_tile_coords();
-                        self.path.clear();
+            if self.next_step:
+                target_px = self.next_step[0] * TILESIZE + TILESIZE // 2
+                target_py = self.next_step[1] * TILESIZE + TILESIZE // 2
+                direction_to_step = Vector2(target_px, target_py) - Vector2(self.hitbox.center)
+                dist_sq_to_step = direction_to_step.length_squared()
+                close_enough_sq = max((self.speed * 0.8) ** 2, (TILESIZE * 0.25) ** 2)
+                if dist_sq_to_step < close_enough_sq:
+                    if self.pursuing_lkp_info and self.next_step == self.pursuing_lkp_info['tile']:
+                        self.recalculation_needed = True
+                        self.direction = Vector2()
                         self.next_step = None
-                        try:
-                            calculated_path = None;
-                            func_name = getattr(self.pathfinding_func, '__name__', 'unknown')
-                            if func_name in ['bfs_pathfinding', 'dfs_pathfinding', 'ucs_pathfinding',
-                                             'backtracking_pathfinding', 'forward_checking_backtracking_pathfinding',
-                                             'min_conflict_like_step_search', 'hill_climbing_pathfinding',
-                                             'rtaa_star_pathfinding', 'beam_search_pathfinding',
-                                             'genetic_algorithm_pathfinding'] or 'min_conflicts_csp_repair_path' in func_name:
-                                calculated_path = self.pathfinding_func(start_tile, pathfinding_target_tile,
-                                                                        self.is_walkable)
-                            else:
-                                calculated_path = self.pathfinding_func(start_tile, pathfinding_target_tile,
-                                                                        self.is_walkable, heuristic_func=self.heuristic)
-                            if calculated_path and isinstance(calculated_path, deque):
-                                self.path = calculated_path
-                                if self.path: self.next_step = self.path.popleft()
-                            if not self.next_step and not self.path:
-                                self.direction = Vector2();
-                                self.recalculation_needed = True
-                                if self.pursuing_lkp_info:
-                                    if self.pursuing_lkp_info['target_id'] in self.last_known_positions:
-                                        del self.last_known_positions[self.pursuing_lkp_info['target_id']]
-                                    self.pursuing_lkp_info = None
-                        except Exception as e:
-                            print(
-                                f"Lỗi pathfinding (move) cho {self.npc_name} bằng {getattr(self.pathfinding_func, '__name__', '?')}: {e}")
-                            self.direction = Vector2();
-                            self.path.clear();
-                            self.next_step = None;
-                            self.recalculation_needed = True
-                            if self.pursuing_lkp_info: self.pursuing_lkp_info = None
-                    elif target_tile_on_obstacle:
-                        self.direction = Vector2();
-                        self.path.clear();
-                        self.next_step = None;
+                        return
+                    self.next_step = self.path.popleft() if self.path else None
+                    if not self.next_step:
                         self.recalculation_needed = True
-                        if self.pursuing_lkp_info: self.pursuing_lkp_info = None
-
-                if self.next_step:
-                    target_px = self.next_step[0] * TILESIZE + TILESIZE // 2
-                    target_py = self.next_step[1] * TILESIZE + TILESIZE // 2
-                    direction_to_step = Vector2(target_px, target_py) - Vector2(self.hitbox.center)
-                    dist_sq_to_step = direction_to_step.length_squared()
-                    close_enough_sq = (self.speed * 1.0) ** 2
-                    close_enough_sq = max(close_enough_sq, (TILESIZE * 0.3) ** 2)
-                    if dist_sq_to_step < close_enough_sq:
-                        if self.pursuing_lkp_info and self.next_step == self.pursuing_lkp_info['tile']:
-                            self.recalculation_needed = True;
-                            self.direction = Vector2();
-                            return
-                        self.next_step = self.path.popleft() if self.path else None
-                        if not self.next_step:
-                            self.recalculation_needed = True;
-                            self.direction = Vector2()
-                    elif direction_to_step.length() > 0:
-                        self.direction = direction_to_step.normalize()
-                    else:
-                        self.direction = Vector2();
-                        self.next_step = None;
-                        self.recalculation_needed = True
-            else:
-                self.direction = Vector2();
-                self.status = self.get_directional_status('idle')
+                        self.direction = Vector2()
+                elif direction_to_step.length() > 0:
+                    self.direction = direction_to_step.normalize()
+                else:
+                    self.direction = Vector2()
+                    self.next_step = None
+                    self.recalculation_needed = True
             return
 
         elif self.status.startswith('idle'):

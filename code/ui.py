@@ -13,6 +13,8 @@ class UI:
         # --- THÊM FONT CHO THÔNG BÁO CHIẾN THẮNG ---
         self.victory_font = pygame.font.Font(UI_FONT, 40)  # Font lớn hơn, bạn có thể điều chỉnh
         self.victory_message_color = TEXT_COLOR_SELECTED  # Hoặc một màu nổi bật khác
+        self.pathfinding_alert_font = pygame.font.Font(UI_FONT, UI_FONT_SIZE)  # Hoặc kích thước khác
+        self.show_algo_menu_due_to_error = False
         # --- KẾT THÚC THÊM FONT ---
 
         self.health_bar_rect = pygame.Rect(10, 10, HEALTH_BAR_WIDTH, BAR_HEIGHT)
@@ -122,7 +124,7 @@ class UI:
                 if not ALGORITHM_NAMES: return
 
                 for i in range(start_index, end_index):
-                    if 0 <= i < len(ALGORITHM_NAMES):
+                    if 0 <= i < len(ALGORITHM_NAMES) and ALGORITHM_NAMES[i] != 'RTAA*':
                         algo_name = ALGORITHM_NAMES[i]
                         item_y_offset = (i - start_index) * menu_item_height
                         item_rect = pygame.Rect(menu_x + 5, menu_y + 5 + item_y_offset, menu_width - 10,
@@ -155,6 +157,38 @@ class UI:
                                             [(menu_x + menu_width // 2, down_arrow_y),
                                              (menu_x + menu_width // 2 - 5, down_arrow_y - 5),
                                              (menu_x + menu_width // 2 + 5, down_arrow_y - 5)])
+
+    # Trong lớp UI
+    def display_pathfinding_alert(self, npc_name, algo_name, time_taken):
+        message1 = f"Loi: NPC '{npc_name}' voi '{algo_name}'"
+        message2 = f"xu ly qua lau ({time_taken}ms) hoac khong tim duoc duong."
+        message3 = "Vui long chon thuat toan khac (M)."
+
+        text_surf1 = self.pathfinding_alert_font.render(message1, False, (255, 100, 100))  # Màu đỏ nhạt
+        text_surf2 = self.pathfinding_alert_font.render(message2, False, (255, 100, 100))
+        text_surf3 = self.pathfinding_alert_font.render(message3, False, TEXT_COLOR)
+
+        screen_w = self.display_surface.get_width()
+        screen_h = self.display_surface.get_height()
+
+        padding = 10
+        bg_rect_w = max(text_surf1.get_width(), text_surf2.get_width(), text_surf3.get_width()) + padding * 2
+        line_h = text_surf1.get_height()
+        bg_rect_h = (line_h * 3) + (padding * 4)
+
+        bg_rect = pygame.Rect((screen_w - bg_rect_w) / 2, screen_h * 0.4, bg_rect_w, bg_rect_h)  # Vị trí giữa màn hình
+
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, bg_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR_ACTIVE, bg_rect, 3)
+
+        self.display_surface.blit(text_surf1, (bg_rect.x + padding, bg_rect.y + padding))
+        self.display_surface.blit(text_surf2, (bg_rect.x + padding, bg_rect.y + padding + line_h + padding // 2))
+        self.display_surface.blit(text_surf3, (bg_rect.x + padding, bg_rect.y + padding + (line_h + padding // 2) * 2))
+
+        # Tùy chọn: Tự động mở menu chọn thuật toán
+        if self.show_algo_menu_due_to_error and not self.show_algo_menu:
+            self.show_algo_menu = True
+            self.show_algo_menu_due_to_error = False  # Reset cờ sau khi mở menu
 
     # --- THÊM PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CHIẾN THẮNG ---
     def display_victory_notification(self, message_text="Tất cả quái đã bị tiêu diệt!"):
@@ -199,7 +233,7 @@ class UI:
 
     # --- CẬP NHẬT CHỮ KÝ display() ĐỂ NHẬN CỜ THÔNG BÁO ---
     def display(self, player, current_algorithm_name, po_is_enabled, enemy_aggression_enabled,
-                show_victory_message_flag=False):
+                show_victory_message_flag=False,pathfinding_alert_data=None):
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
         self.show_exp(player.exp)
@@ -245,15 +279,16 @@ class UI:
         border_color_aggro = UI_BORDER_COLOR_ACTIVE if enemy_aggression_enabled else UI_BORDER_COLOR
         pygame.draw.rect(self.display_surface, border_color_aggro, self.aggro_mode_display_rect, 3)
         self.display_surface.blit(aggro_surf, aggro_surf.get_rect(center=self.aggro_mode_display_rect.center))
-
-        # --- HIỂN THỊ THÔNG BÁO CHIẾN THẮNG NẾU CỜ LÀ TRUE ---
+        if pathfinding_alert_data:
+            self.display_pathfinding_alert(  # Phương thức này bạn đã định nghĩa ở bước trước
+                pathfinding_alert_data['npc_name'],
+                pathfinding_alert_data['algo_name'],
+                pathfinding_alert_data['time']
+            )
+            if self.show_algo_menu_due_to_error and not self.show_algo_menu:
+                self.show_algo_menu = True
         if show_victory_message_flag:
-            self.display_victory_notification()  # Bạn có thể truyền một tin nhắn tùy chỉnh ở đây nếu muốn
-            # Nếu bạn muốn Level quản lý việc "đã hiển thị", Level sẽ set cờ victory_message_shown_this_level = True
-            # sau khi gọi display.
-            # Hoặc, UI có thể có logic để tự ẩn thông báo sau một thời gian.
-            # Hiện tại, nó sẽ hiển thị miễn là cờ show_victory_message_flag là True.
-        # --- KẾT THÚC HIỂN THỊ ---
+            self.display_victory_notification()
 
     def handle_click(self, click_pos, level_instance_ref):
         if hasattr(self,
@@ -284,9 +319,15 @@ class UI:
                                 if isinstance(sprite, NPC):
                                     sprite.pathfinding_func = level_instance_ref.selected_npc_algorithm_func
                                     sprite.recalculation_needed = True
-                                    sprite.path.clear();
+                                    sprite.path.clear()
                                     sprite.next_step = None
-                        self.show_algo_menu = False
+                        self.show_algo_menu = False  # Đóng menu sau khi chọn
+                        self.show_algo_menu_due_to_error = False
+                        if level_instance_ref.active_pathfinding_alert_npc_id is not None:
+                            npc_id_had_alert = level_instance_ref.active_pathfinding_alert_npc_id
+                            if npc_id_had_alert in level_instance_ref.pathfinding_issues:
+                                del level_instance_ref.pathfinding_issues[npc_id_had_alert]
+                            level_instance_ref.active_pathfinding_alert_npc_id = None
                         clicked_on_menu_item = True
                         return True
 

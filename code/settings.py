@@ -9,9 +9,6 @@ HITBOX_OFFSET = {
 	'grass': -5,
 	'invisible': 0}
 
-# --- LOẠI BỎ CÀI ĐẶT MẶC ĐỊNH CHO PARTIAL OBSERVABILITY ---
-# DEFAULT_PARTIAL_OBSERVABILITY = True # Không còn cần thiết
-
 # ui
 BAR_HEIGHT = 20
 HEALTH_BAR_WIDTH = 200

@@ -191,8 +191,6 @@ def forward_checking_backtracking_pathfinding(start_node, end_node, is_walkable_
         estimated_distance = heuristic_diagonal(start_node, end_node)
         max_depth_calculated = int(estimated_distance * 2.5) + 30
         max_depth = max(30, min(max_depth_calculated, 750))
-        # print(f"Forward Checking BS: start={start_node}, end={end_node}, estimated_dist={estimated_distance:.2f}, calculated_max_depth={max_depth}")
-
     def check_forward(node_being_considered, path_if_node_is_chosen_set):
         if node_being_considered == end_node:
             return True
@@ -530,21 +528,11 @@ def min_conflicts_csp_repair_path(initial_path_deque, is_walkable_func, TILESIZE
     return deque(current_path)
 
 
-# --- THUẬT TOÁN DI TRUYỀN (PLACEHOLDER) ---
-def genetic_algorithm_pathfinding(start_node, end_node, is_walkable_func,
-                                  TILESIZE=64):  # Added TILESIZE for signature consistency
-    """Thuật toán Di truyền (Genetic Algorithm) - Hiện tại dùng A* làm giải pháp tạm thời."""
-    # print("Genetic Algorithm is currently using A* as a fallback.")
-    return a_star_pathfinding(start_node, end_node, is_walkable_func, heuristic_diagonal)
-
-
-# --- DANH SÁCH VÀ DICTIONARY ĐỂ ĐĂNG KÝ CÁC THUẬT TOÁN ---
+# --- DANH SÁCH ĐỂ ĐĂNG KÝ CÁC THUẬT TOÁN ---
 ALGORITHM_NAMES = [
     'A*', 'BFS', 'DFS', 'UCS',
     'Backtracking', 'Forward Checking BS',
-    'MinConflict-like Step',
     'Hill Climbing', 'RTAA*', 'Beam Search',
-    'Genetic Algo (A*)',
     'MinConflicts Repair (BFS)'
 ]
 PATHFINDING_ALGORITHMS = {
@@ -554,15 +542,11 @@ PATHFINDING_ALGORITHMS = {
     'UCS': ucs_pathfinding,
     'Backtracking': backtracking_pathfinding,
     'Forward Checking BS': forward_checking_backtracking_pathfinding,
-    'MinConflict-like Step': min_conflict_like_step_search,
     'Hill Climbing': hill_climbing_pathfinding,
-    'RTAA*': rtaa_star_pathfinding,
     'Beam Search': beam_search_pathfinding,
-    'Genetic Algo (A*)': genetic_algorithm_pathfinding,
-    'MinConflicts Repair (BFS)': lambda start, end, is_walkable: min_conflicts_csp_repair_path(
+    'MinConflicts Repair (BFS)': lambda start, end, is_walkable, heuristic_func=None: min_conflicts_csp_repair_path(
         initial_path_deque=bfs_pathfinding(start, end, is_walkable),
         is_walkable_func=is_walkable,
-        TILESIZE=64,  # Pass a TILESIZE, though not strictly used by current repair logic internally
-        # max_steps can be configured here if needed, or use default within the function
+        TILESIZE=64,
     )
 }

@@ -12,7 +12,7 @@ from npc import NPC
 from particles import AnimationPlayer
 from magic import MagicPlayer
 from upgrade import Upgrade
-from pathfinding_algorithms import PATHFINDING_ALGORITHMS, ALGORITHM_NAMES
+from pathfinding_algorithms import PATHFINDING_ALGORITHMS
 
 
 class Level:
@@ -43,6 +43,11 @@ class Level:
         self.initial_enemy_count = 0
         self.all_enemies_defeated_this_level = False
         self.victory_message_shown_this_level = False  # Để đảm bảo chỉ hiển thị một lần mỗi khi đạt được
+
+        self.pathfinding_issues = {}  # key: id(npc), value: {'npc': npc_instance, 'algo_name': str, 'time': int, 'timestamp': float}
+        self.active_pathfinding_alert_npc_id = None
+        self.alert_message_duration = 5000  # Thời gian hiển thị thông báo lỗi (ms)
+        self.alert_message_start_time = 0
         # --- KẾT THÚC THÊM ---
 
         self.create_map()
@@ -84,13 +89,13 @@ class Level:
                         y = row_index * TILESIZE
                         if style == 'boundary':
                             Tile((x, y), [self.obstacle_sprites], 'invisible', hitbox_inflation=(-10, None))
-                        elif style == 'grass':
-                            random_grass_image = choice(graphics['grass'])
-                            Tile(
-                                (x, y),
-                                [self.visible_sprites, self.obstacle_sprites, self.attackable_sprites],
-                                'grass',
-                                random_grass_image)
+                        # elif style == 'grass':
+                        #     random_grass_image = choice(graphics['grass'])
+                        #     Tile(
+                        #         (x, y),
+                        #         [self.visible_sprites, self.obstacle_sprites, self.attackable_sprites],
+                        #         'grass',
+                        #         random_grass_image)
                         elif style == 'object':
                             surf = graphics['objects'][int(col)]
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object',
@@ -276,7 +281,20 @@ class Level:
                 print("Thông báo: Tất cả quái đã bị tiêu diệt!")  # Dùng để debug
 
     # --- KẾT THÚC PHƯƠNG THỨC KIỂM TRA ---
-
+    def report_npc_pathfinding_issue(self, npc_instance, algo_name, time_taken_ms):
+        npc_id = id(npc_instance)
+        # Chỉ hiển thị một cảnh báo tại một thời điểm để tránh spam UI
+        if self.active_pathfinding_alert_npc_id is None:
+            self.pathfinding_issues[npc_id] = {
+                'npc': npc_instance,
+                'algo_name': algo_name,
+                'time': time_taken_ms,
+                'timestamp': pygame.time.get_ticks()
+            }
+            self.active_pathfinding_alert_npc_id = npc_id
+            self.alert_message_start_time = pygame.time.get_ticks()
+            if self.ui:
+                self.ui.show_algo_menu_due_to_error = True  # Thêm cờ này vào UI
     def run(self):
         if not self.player or not self.ui:
             pygame.quit()
@@ -292,24 +310,29 @@ class Level:
             if hasattr(self, '_original_camera_target'): delattr(self, '_original_camera_target')
 
         self.visible_sprites.custom_draw(entity_to_draw_around)
-
-        # --- CẬP NHẬT CHO THÔNG BÁO DIỆT QUÁI ---
-        # Truyền cờ all_enemies_defeated_this_level và victory_message_shown_this_level cho UI
-        # UI sẽ quyết định có hiển thị thông báo không
+        active_alert_display_data = None
+        if self.active_pathfinding_alert_npc_id is not None and \
+                self.active_pathfinding_alert_npc_id in self.pathfinding_issues:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.alert_message_start_time > self.alert_message_duration:
+                self.active_pathfinding_alert_npc_id = None
+                if self.ui:  # Kiểm tra self.ui tồn tại
+                    self.ui.show_algo_menu_due_to_error = False
+            issue_info = self.pathfinding_issues[self.active_pathfinding_alert_npc_id]
+            # Đảm bảo NPC còn tồn tại (quan trọng nếu NPC có thể bị hủy)
+            if issue_info['npc'] and issue_info['npc'].groups():  # Kiểm tra xem NPC còn trong group nào không
+                active_alert_display_data = {
+                    'npc_name': issue_info['npc'].npc_name,
+                    'algo_name': issue_info['algo_name'],
+                    'time': issue_info['time']
+                }
         should_show_victory = self.all_enemies_defeated_this_level and not self.victory_message_shown_this_level
         self.ui.display(self.player, self.selected_npc_algorithm_name, self.partial_observability_enabled,
                         self.enemy_aggression_mode_enabled,
-                        show_victory_message_flag=should_show_victory)  # Truyền cờ mới
+                        show_victory_message_flag=should_show_victory,
+                        pathfinding_alert_data=active_alert_display_data)  # Truyền cờ mới
 
         if should_show_victory:
-            # Sau khi UI đã có cơ hội hiển thị nó dựa trên cờ,
-            # chúng ta có thể đánh dấu là đã hiển thị (nếu UI không tự quản lý việc này)
-            # Hoặc, nếu UI tự quản lý (ví dụ: hiển thị trong X giây rồi tự ẩn),
-            # thì Level không cần làm gì thêm ở đây.
-            # Để đơn giản, giả sử UI sẽ hiển thị nó một lần khi cờ là True.
-            # Nếu muốn thông báo biến mất, logic đó nên ở trong UI.
-            # Nếu muốn nó chỉ hiển thị MỘT LẦN cho đến khi level reset, cờ victory_message_shown_this_level là cần thiết.
-            # self.victory_message_shown_this_level = True # Cờ này sẽ được UI quản lý hoặc set sau khi hiển thị
             pass
         # --- KẾT THÚC CẬP NHẬT ---
 
