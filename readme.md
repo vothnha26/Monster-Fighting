@@ -8,7 +8,7 @@
 * [GIF Gameplay](#gif-gameplay)
 * [Cài đặt & Chạy game (Installation & Running the Game)](#cài-đặt--chạy-game-installation--running-the-game)
 * [Công nghệ sử dụng và Thuật toán (Technologies Used and Algorithms)](#công-nghệ-sử-dụng-và-thuật-toán-technologies-used-and-algorithms)
-
+* [So sánh các thuật toán](#so-sánh-các-thuật-toán)
 ---
 
 ## Giới thiệu (Introduction)
@@ -148,14 +148,53 @@ UCS
     * **Tìm đường (Pathfinding)**:
         * **A\***: Được sử dụng làm thuật toán tìm đường chính cho NPC và có thể là cả Enemy.
         * **BFS (Breadth-First Search)**: Có sẵn và được sử dụng bởi một số Enemy.
-        * **Hill Climbing**: Được sử dụng bởi một số Enemy.
-        * Các thuật toán khác được định nghĩa trong `pathfinding_algorithms.txt` bao gồm: DFS, UCS, Backtracking, Forward Checking Backtracking, MinConflict-like Step Search, Beam Search, và Genetic Algorithm (hiện tại dùng A\* làm fallback).
+        * **Simple Hill Climbing**: Được sử dụng bởi một số Enemy.
+        * Các thuật toán được định nghĩa trong `pathfinding_algorithms.txt` bao gồm: **BFS**, **A\***, **Minconflict (MinConflicts Repair (BFS))**, **DFS**, **UCS**, **Backtracking**, **Forward Checking Backtracking**, **Beam Search**, **Simple Hill Climbing**
     * **Quản lý trạng thái (State Management)**: Các thực thể (Player, Enemy, NPC) có các trạng thái khác nhau (ví dụ: idle, move, attack) ảnh hưởng đến hành vi và hoạt ảnh.
     * **Xử lý va chạm (Collision Detection)**: Pygame được sử dụng để phát hiện va chạm giữa các thực thể và vật cản.
     * **Steering Behaviors (Tách bầy - Separation)**: Kẻ thù và NPC có thể có hành vi tách bầy để tránh chồng chéo.
     * **Partial Observability (Quan sát cục bộ)**: NPC có thể hoạt động dưới cơ chế quan sát cục bộ, nơi chúng chỉ phản ứng với những gì "nhìn thấy" trong một bán kính và góc nhìn nhất định, và ghi nhớ vị trí đã biết cuối cùng (LKP) của mục tiêu.
 
 ---
+## So sánh các thuật toán
+
+Thuật toán A*:
+
+![image](https://github.com/user-attachments/assets/21b50744-9697-477e-91e4-0baacb72fba6)
+
+Thuật toán BFS:
+
+![image](https://github.com/user-attachments/assets/0a14e7e1-0959-40ce-93a1-8e6e95a75424)
+
+Thuật toán DFS:
+
+![image](https://github.com/user-attachments/assets/d6fb3547-1b83-4b29-9edb-7a37888a16dc)
+
+Thuật toán UCS:
+
+![image](https://github.com/user-attachments/assets/7922b9dd-fa0e-4e8a-947c-c1107e3be78a)
+
+Thuật toán Backtracking:
+
+![image](https://github.com/user-attachments/assets/70816815-4d31-4903-83e8-e7aeb931a082)
+
+Thuật toán Forward Checking Backtracking:
+
+![image](https://github.com/user-attachments/assets/671f4a6c-7424-4dc3-9dfe-d0cdc249c900)
+
+Thuật toán Simple Hill Climbing:
+
+![image](https://github.com/user-attachments/assets/ca568ff4-05a4-4138-a2c3-aee357891587)
+
+Thuật toán Beam Search:
+
+![image](https://github.com/user-attachments/assets/134eb52f-6992-483b-ad6c-a325974bfb99)
+
+Thuật toán Minconflict:
+
+![image](https://github.com/user-attachments/assets/4fc77f80-bf3c-453f-9884-8eb6dfba55d3)
+
+
 ## Tài liệu tham khảo
 
 1. Hill Climbing in Artificial Intelligence, [Truy cập ngày 3/5/2025]  
